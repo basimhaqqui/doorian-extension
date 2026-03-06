@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DoorIan - Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="app">
+    <nav class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">D</div>
+        <span class="logo-text">DoorIan</span>
+      </div>
+      <ul class="nav-links">
+        <li class="nav-item active" data-view="overview">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
+          Overview
+        </li>
+        <li class="nav-item" data-view="bookmarked">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+          Bookmarked
+        </li>
+        <li class="nav-item" data-view="applied">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Applied
+        </li>
+        <li class="nav-item" data-view="timeline">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Timeline
+        </li>
+      </ul>
+      <div class="sidebar-footer">
+        <button id="exportCsvBtn" class="sidebar-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Export CSV
+        </button>
+      </div>
+    </nav>
+
+    <main class="main-content">
+      <!-- Overview -->
+      <div id="overviewView" class="view active">
+        <div class="view-header">
+          <h1>Overview</h1>
+          <p class="subtitle">Your job search at a glance</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number" id="statBookmarked">0</div>
+            <div class="stat-label">Bookmarked</div>
+            <div class="stat-icon purple">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="statApplied">0</div>
+            <div class="stat-label">Applied</div>
+            <div class="stat-icon blue">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="statTotal">0</div>
+            <div class="stat-label">Total Tracked</div>
+            <div class="stat-icon green">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="statCompanies">0</div>
+            <div class="stat-label">Companies</div>
+            <div class="stat-icon orange">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Recent Activity</h2>
+            </div>
+            <div id="recentActivity" class="activity-list"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <h2>Upcoming Deadlines</h2>
+            </div>
+            <div id="upcomingDeadlines" class="deadline-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bookmarked View -->
+      <div id="bookmarkedView" class="view">
+        <div class="view-header">
+          <h1>Bookmarked Jobs</h1>
+          <p class="subtitle">Jobs you're interested in but haven't applied to yet</p>
+        </div>
+        <div id="bookmarkedTable" class="table-container"></div>
+      </div>
+
+      <!-- Applied View -->
+      <div id="appliedView" class="view">
+        <div class="view-header">
+          <h1>Applied Jobs</h1>
+          <p class="subtitle">Track your application progress</p>
+        </div>
+        <div id="appliedTable" class="table-container"></div>
+      </div>
+
+      <!-- Timeline View -->
+      <div id="timelineView" class="view">
+        <div class="view-header">
+          <h1>Application Timeline</h1>
+          <p class="subtitle">Visualize your job search journey</p>
+        </div>
+        <div id="timelineContent" class="timeline-container"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Status Modal -->
+  <div id="statusModal" class="modal" style="display:none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3>Update Application Status</h3>
+      <p id="modalJobTitle" class="modal-job-title"></p>
+      <div class="status-options">
+        <button class="status-option" data-status="Applied">Applied</button>
+        <button class="status-option" data-status="Online Assessment">Online Assessment</button>
+        <button class="status-option" data-status="Phone Screen">Phone Screen</button>
+        <button class="status-option" data-status="Interview Round 1">Interview Round 1</button>
+        <button class="status-option" data-status="Interview Round 2">Interview Round 2</button>
+        <button class="status-option offer" data-status="Offer">Offer</button>
+        <button class="status-option rejected" data-status="Rejected">Rejected</button>
+        <button class="status-option" data-status="No Response">No Response</button>
+      </div>
+
+      <div id="rejectionReflection" class="reflection" style="display:none;">
+        <h4>Quick Reflection</h4>
+        <p class="reflection-prompt">What do you think was the reason?</p>
+        <div class="reflection-options">
+          <label><input type="radio" name="reason" value="No reason given"> No reason given</label>
+          <label><input type="radio" name="reason" value="Failed OA"> Failed OA</label>
+          <label><input type="radio" name="reason" value="Interview performance"> Interview performance</label>
+          <label><input type="radio" name="reason" value="Resume screening"> Resume screening</label>
+        </div>
+        <textarea id="reflectionNotes" placeholder="Any notes for next time? (optional)"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button id="modalCancel" class="btn-modal btn-cancel">Cancel</button>
+        <button id="modalSave" class="btn-modal btn-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

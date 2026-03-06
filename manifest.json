@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "DoorIan",
+  "version": "1.0.0",
+  "description": "Bookmark and track job applications across platforms",
+  "permissions": ["storage", "activeTab", "tabs", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://app.joinhandshake.com/*",
+        "https://www.linkedin.com/jobs/*",
+        "https://www.linkedin.com/job/*",
+        "https://linkedin.com/jobs/*",
+        "https://linkedin.com/job/*",
+        "*://*.linkedin.com/jobs/*",
+        "*://*.linkedin.com/job/*",
+        "https://www.indeed.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
