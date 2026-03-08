@@ -1,4 +1,10 @@
-// Content script - extracts job data from supported job sites
+// Suppress "Extension context invalidated" errors from orphaned scripts
+window.addEventListener('error', (e) => {
+  if (e.message?.includes('Extension context invalidated')) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}, true);
 
 function extractHandshakeJob() {
   const title = document.querySelector('h1')?.textContent?.trim() || '';
@@ -200,31 +206,31 @@ try {
 
 // Safe wrapper — prevents errors when extension is reloaded while old tabs are open
 function isExtensionValid() {
-  try { return !!chrome.runtime?.id; } catch (e) { return false; }
+  try {
+    return !!(chrome && chrome.runtime && chrome.runtime.id);
+  } catch (e) {
+    return false;
+  }
 }
 
 function safeStorageGet(keys, callback) {
+  if (!isExtensionValid()) return;
   try {
-    if (!isExtensionValid()) return;
-    chrome.storage.local.get(keys, (data) => {
-      try {
-        if (!isExtensionValid() || chrome.runtime.lastError) return;
-        callback(data);
-      } catch (e) { /* context lost */ }
+    chrome.storage.local.get(keys, function(data) {
+      if (!isExtensionValid()) return;
+      try { callback(data); } catch (e) {}
     });
-  } catch (e) { /* context lost */ }
+  } catch (e) {}
 }
 
 function safeStorageSet(obj, callback) {
+  if (!isExtensionValid()) return;
   try {
-    if (!isExtensionValid()) return;
-    chrome.storage.local.set(obj, () => {
-      try {
-        if (!isExtensionValid() || chrome.runtime.lastError) return;
-        if (callback) callback();
-      } catch (e) { /* context lost */ }
+    chrome.storage.local.set(obj, function() {
+      if (!isExtensionValid()) return;
+      try { if (callback) callback(); } catch (e) {}
     });
-  } catch (e) { /* context lost */ }
+  } catch (e) {}
 }
 
 // --- Floating "Add Job" button ---
