@@ -186,33 +186,45 @@ function extractJobData() {
 }
 
 // Listen for messages from popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'getJobData') {
-    const job = extractJobData();
-    sendResponse({ job });
-  }
-  return true;
-});
+try {
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    try {
+      if (request.action === 'getJobData') {
+        const job = extractJobData();
+        sendResponse({ job });
+      }
+    } catch (e) { /* context lost */ }
+    return true;
+  });
+} catch (e) { /* context lost */ }
 
-// Safe wrapper for chrome API calls — prevents errors when extension is reloaded
+// Safe wrapper — prevents errors when extension is reloaded while old tabs are open
+function isExtensionValid() {
+  try { return !!chrome.runtime?.id; } catch (e) { return false; }
+}
+
 function safeStorageGet(keys, callback) {
   try {
-    if (!chrome.runtime?.id) return;
+    if (!isExtensionValid()) return;
     chrome.storage.local.get(keys, (data) => {
-      if (chrome.runtime.lastError) return;
-      callback(data);
+      try {
+        if (!isExtensionValid() || chrome.runtime.lastError) return;
+        callback(data);
+      } catch (e) { /* context lost */ }
     });
-  } catch (e) { /* extension context invalidated */ }
+  } catch (e) { /* context lost */ }
 }
 
 function safeStorageSet(obj, callback) {
   try {
-    if (!chrome.runtime?.id) return;
+    if (!isExtensionValid()) return;
     chrome.storage.local.set(obj, () => {
-      if (chrome.runtime.lastError) return;
-      if (callback) callback();
+      try {
+        if (!isExtensionValid() || chrome.runtime.lastError) return;
+        if (callback) callback();
+      } catch (e) { /* context lost */ }
     });
-  } catch (e) { /* extension context invalidated */ }
+  } catch (e) { /* context lost */ }
 }
 
 // --- Floating "Add Job" button ---
@@ -379,6 +391,7 @@ function watchForApplyClicks() {
 
 // Initialize on page load
 function init() {
+  if (!isExtensionValid()) return;
   createFloatingButton();
   watchForApplyClicks();
 }
@@ -393,6 +406,7 @@ if (document.readyState === 'loading') {
 // Re-check on URL changes (for SPAs like LinkedIn)
 let lastUrl = location.href;
 new MutationObserver(() => {
+  if (!isExtensionValid()) return;
   if (location.href !== lastUrl) {
     lastUrl = location.href;
     const oldFab = document.getElementById('doorian-fab');
