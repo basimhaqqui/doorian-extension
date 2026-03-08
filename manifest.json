@@ -16,13 +16,11 @@
     {
       "matches": [
         "https://app.joinhandshake.com/*",
-        "https://www.linkedin.com/jobs/*",
-        "https://www.linkedin.com/job/*",
-        "https://linkedin.com/jobs/*",
-        "https://linkedin.com/job/*",
-        "*://*.linkedin.com/jobs/*",
-        "*://*.linkedin.com/job/*",
-        "https://www.indeed.com/*"
+        "https://www.linkedin.com/*",
+        "https://linkedin.com/*",
+        "*://*.linkedin.com/*",
+        "https://www.indeed.com/*",
+        "https://indeed.com/*"
       ],
       "js": ["content.js"],
       "css": ["content.css"]
