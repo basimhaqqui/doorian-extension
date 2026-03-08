@@ -194,6 +194,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
+// Safe wrapper for chrome API calls — prevents errors when extension is reloaded
+function safeStorageGet(keys, callback) {
+  try {
+    if (!chrome.runtime?.id) return;
+    chrome.storage.local.get(keys, (data) => {
+      if (chrome.runtime.lastError) return;
+      callback(data);
+    });
+  } catch (e) { /* extension context invalidated */ }
+}
+
+function safeStorageSet(obj, callback) {
+  try {
+    if (!chrome.runtime?.id) return;
+    chrome.storage.local.set(obj, () => {
+      if (chrome.runtime.lastError) return;
+      if (callback) callback();
+    });
+  } catch (e) { /* extension context invalidated */ }
+}
+
 // --- Floating "Add Job" button ---
 function createFloatingButton() {
   if (document.getElementById('doorian-fab')) return;
@@ -210,7 +231,7 @@ function createFloatingButton() {
     Add Job`;
 
   // Check if already saved
-  chrome.storage.local.get(['bookmarked', 'applied'], (data) => {
+  safeStorageGet(['bookmarked', 'applied'], (data) => {
     const allSaved = [...(data.bookmarked || []), ...(data.applied || [])];
     if (allSaved.some(j => j.url === window.location.href)) {
       fab.classList.add('saved');
@@ -232,11 +253,11 @@ function createFloatingButton() {
       savedAt: new Date().toISOString()
     };
 
-    chrome.storage.local.get(['bookmarked'], (data) => {
+    safeStorageGet(['bookmarked'], (data) => {
       const list = data.bookmarked || [];
       if (list.some(j => j.url === jobData.url)) return;
       list.unshift(jobData);
-      chrome.storage.local.set({ bookmarked: list }, () => {
+      safeStorageSet({ bookmarked: list }, () => {
         fab.classList.add('saved');
         fab.innerHTML = `
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
@@ -284,13 +305,13 @@ function createApplyToast(job) {
       savedAt: new Date().toISOString()
     };
 
-    chrome.storage.local.get(['applied', 'bookmarked'], (data) => {
+    safeStorageGet(['applied', 'bookmarked'], (data) => {
       const applied = data.applied || [];
       const bookmarked = (data.bookmarked || []).filter(j => j.url !== jobData.url);
       if (!applied.some(j => j.url === jobData.url)) {
         applied.unshift(jobData);
       }
-      chrome.storage.local.set({ applied, bookmarked }, () => {
+      safeStorageSet({ applied, bookmarked }, () => {
         toast.classList.remove('visible');
         setTimeout(() => toast.remove(), 300);
 
