@@ -2,10 +2,10 @@
 
 function extractHandshakeJob() {
   const title = document.querySelector('h1')?.textContent?.trim() || '';
-  // Try multiple selectors + fallback: grab the text right after the company logo area
+  const allText = document.body.innerText;
+
   let company = document.querySelector('[data-hook="employer-name"], a[href*="/employers/"], a[href*="/employer"]')?.textContent?.trim() || '';
   if (!company) {
-    // Handshake often puts company name as a link or heading near the top
     const allLinks = document.querySelectorAll('a');
     for (const link of allLinks) {
       if (link.href && link.href.includes('/employers/') && link.textContent.trim()) {
@@ -15,20 +15,14 @@ function extractHandshakeJob() {
     }
   }
   if (!company) {
-    // Fallback: look for text pattern "CompanyName\nIndustry" above the job title
-    const allText = document.body.innerText;
     const companyMatch = allText.match(/^(.+?)\n(?:Internet|Software|Technology|Manufacturing|Financial|Scientific|Information|Consulting|Healthcare|Education|Engineering|Business)[^\n]*\n/m);
     if (companyMatch) company = companyMatch[1].trim();
   }
 
-  // Extract "At a glance" details
   const glanceItems = document.querySelectorAll('[class*="style__body"] li, [class*="at-a-glance"] li, .style-guide-at-a-glance li');
   let pay = '';
   let location = '';
   let type = '';
-
-  // Try to get info from the "At a glance" section
-  const allText = document.body.innerText;
 
   // Pay - look for salary patterns
   const payMatch = allText.match(/\$[\d,]+(?:\s*[-–]\s*\$?[\d,]+)?(?:\/(?:hr|yr))?/);
@@ -199,3 +193,189 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   return true;
 });
+
+// --- Floating "Add Job" button ---
+function createFloatingButton() {
+  if (document.getElementById('doorian-fab')) return;
+
+  const job = extractJobData();
+  if (!job || !job.title) return;
+
+  const fab = document.createElement('button');
+  fab.id = 'doorian-fab';
+  fab.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+    </svg>
+    Add Job`;
+
+  // Check if already saved
+  chrome.storage.local.get(['bookmarked', 'applied'], (data) => {
+    const allSaved = [...(data.bookmarked || []), ...(data.applied || [])];
+    if (allSaved.some(j => j.url === window.location.href)) {
+      fab.classList.add('saved');
+      fab.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Saved`;
+    }
+  });
+
+  fab.addEventListener('click', () => {
+    const currentJob = extractJobData();
+    if (!currentJob) return;
+
+    const jobData = {
+      ...currentJob,
+      url: window.location.href,
+      savedAt: new Date().toISOString()
+    };
+
+    chrome.storage.local.get(['bookmarked'], (data) => {
+      const list = data.bookmarked || [];
+      if (list.some(j => j.url === jobData.url)) return;
+      list.unshift(jobData);
+      chrome.storage.local.set({ bookmarked: list }, () => {
+        fab.classList.add('saved');
+        fab.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Saved`;
+      });
+    });
+  });
+
+  document.body.appendChild(fab);
+}
+
+// --- Auto-detect Apply button clicks ---
+function createApplyToast(job) {
+  let toast = document.getElementById('doorian-apply-toast');
+  if (toast) toast.remove();
+
+  toast = document.createElement('div');
+  toast.id = 'doorian-apply-toast';
+  toast.innerHTML = `
+    <div class="toast-header">
+      <div class="toast-logo">D</div>
+      <div>
+        <div class="toast-title">Application Detected</div>
+        <div class="toast-subtitle">DoorIan</div>
+      </div>
+    </div>
+    <div class="toast-body">
+      Track <span class="toast-job-name">${job.title}</span> at ${job.company || 'this company'}?
+    </div>
+    <div class="toast-actions">
+      <button class="toast-btn toast-btn-primary" id="doorian-toast-save">Save as Applied</button>
+      <button class="toast-btn toast-btn-secondary" id="doorian-toast-dismiss">Dismiss</button>
+    </div>`;
+
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('visible'), 50);
+
+  document.getElementById('doorian-toast-save').addEventListener('click', () => {
+    const jobData = {
+      ...job,
+      url: window.location.href,
+      status: 'Applied',
+      savedAt: new Date().toISOString()
+    };
+
+    chrome.storage.local.get(['applied', 'bookmarked'], (data) => {
+      const applied = data.applied || [];
+      const bookmarked = (data.bookmarked || []).filter(j => j.url !== jobData.url);
+      if (!applied.some(j => j.url === jobData.url)) {
+        applied.unshift(jobData);
+      }
+      chrome.storage.local.set({ applied, bookmarked }, () => {
+        toast.classList.remove('visible');
+        setTimeout(() => toast.remove(), 300);
+
+        // Update FAB if present
+        const fab = document.getElementById('doorian-fab');
+        if (fab) {
+          fab.classList.add('saved');
+          fab.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Saved`;
+        }
+      });
+    });
+  });
+
+  document.getElementById('doorian-toast-dismiss').addEventListener('click', () => {
+    toast.classList.remove('visible');
+    setTimeout(() => toast.remove(), 300);
+  });
+
+  // Auto-dismiss after 15 seconds
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 15000);
+}
+
+function watchForApplyClicks() {
+  const applySelectors = [
+    'button[aria-label*="Apply"]',
+    'button[aria-label*="apply"]',
+    'a[aria-label*="Apply"]',
+    'button[data-control-name*="apply"]',
+    '.jobs-apply-button',
+    '.ia-IndeedApplyButton',
+    'button.apply',
+    'a.apply',
+    '[class*="apply-button"]',
+    '[class*="ApplyButton"]',
+    'button[class*="apply"]',
+    'a[class*="apply"]'
+  ];
+
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest(applySelectors.join(', '));
+    if (!target) {
+      // Also check if button text contains "Apply"
+      const btn = e.target.closest('button, a');
+      if (!btn) return;
+      const text = btn.textContent.trim();
+      if (!/^(Easy )?Apply/i.test(text) && !/Apply (Now|Externally)/i.test(text)) return;
+    }
+
+    const job = extractJobData();
+    if (job && job.title) {
+      // Small delay so the apply action goes through first
+      setTimeout(() => createApplyToast(job), 800);
+    }
+  }, true);
+}
+
+// Initialize on page load
+function init() {
+  createFloatingButton();
+  watchForApplyClicks();
+}
+
+// Run on load and on SPA navigation changes
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+// Re-check on URL changes (for SPAs like LinkedIn)
+let lastUrl = location.href;
+new MutationObserver(() => {
+  if (location.href !== lastUrl) {
+    lastUrl = location.href;
+    const oldFab = document.getElementById('doorian-fab');
+    if (oldFab) oldFab.remove();
+    setTimeout(init, 1000);
+  }
+}).observe(document.body, { childList: true, subtree: true });

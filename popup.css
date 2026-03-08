@@ -419,3 +419,31 @@ body {
   background: #dbeafe;
   color: #2563eb;
 }
+
+/* Status dropdown in applied list */
+.status-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-family: inherit;
+  max-width: 110px;
+  text-overflow: ellipsis;
+}
+
+.status-select:focus {
+  outline: 2px solid #4361ee;
+  outline-offset: 1px;
+}
+
+.job-list-item-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
