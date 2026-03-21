@@ -2,9 +2,10 @@
 
 A Chrome extension that helps job seekers track applications across LinkedIn, Indeed, and Handshake.
 
-## Demo
+## Demos
 
-[Watch the demo](https://youtu.be/Rf3QIf3-QGI)
+- [Lo-Fi Prototype (Wizard of Oz)](https://youtu.be/IX25yzDx-2k)
+- [Hi-Fi Prototype (Working Extension)](https://youtu.be/Rf3QIf3-QGI)
 
 ## Features
 
